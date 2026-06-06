@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>S1 Science Super Quiz!</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Fredoka for playful headings, Poppins for readable text -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+            background-attachment: fixed;
+            color: #2D3748;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2, h3, .heading-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Custom Animations */
+        @keyframes bounce-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slide-up {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(72, 187, 120, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+
+        .animate-bounce-in { animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
+        
+        /* Option Card Styles */
+        .option-btn {
+            transition: all 0.2s ease;
+            transform: translateY(0);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .option-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .option-btn.selected-correct {
+            background-color: #48BB78 !important; /* Green */
+            color: white !important;
+            border-color: #38A169 !important;
+            animation: pulse-ring 1s infinite;
+        }
+        .option-btn.selected-wrong {
+            background-color: #F56565 !important; /* Red */
+            color: white !important;
+            border-color: #E53E3E !important;
+        }
+        .option-btn.reveal-correct {
+            background-color: #48BB78 !important; /* Green */
+            color: white !important;
+            border-color: #38A169 !important;
+        }
+
+        /* Glassmorphism containers */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 4px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 999px;
+            height: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F6E05E 0%, #ED8936 100%);
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Modal Overlay */
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+    <!-- Global Header -->
+    <header class="w-full max-w-5xl flex justify-between items-center mb-6 animate-slide-up">
+        <button id="btn-home" class="hidden bg-white/20 hover:bg-white/30 text-white p-3 rounded-2xl backdrop-blur-sm transition shadow-lg flex items-center gap-2 font-bold">
+            🏠 <span class="hidden sm:inline">Home</span>
+        </button>
+        <div class="text-white text-center flex-1">
+            <h1 class="text-3xl md:text-5xl font-extrabold drop-shadow-md">🚀 S1 Science Super Quiz</h1>
+            <p id="student-identity" class="text-lg font-medium opacity-90 mt-1 hidden"></p>
+        </div>
+        
+        <div class="flex gap-2">
+            <!-- Timer Display -->
+            <div id="global-timer" class="hidden bg-white text-blue-600 font-extrabold px-4 py-2 rounded-2xl shadow-xl heading-font text-xl flex items-center gap-2">
+                ⏱️ <span id="timer-display">00:00</span>
+            </div>
+            <!-- Score Display -->
+            <div id="global-score" class="hidden bg-white text-orange-500 font-extrabold px-4 py-2 rounded-2xl shadow-xl heading-font text-xl flex items-center gap-2">
+                ⭐ <span id="score-display">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full max-w-5xl relative">
+
+        <!-- SCREEN 0: Student Login Form -->
+        <div id="screen-login" class="flex justify-center items-center">
+            <div class="glass-panel p-8 md:p-12 w-full max-w-md animate-bounce-in text-center">
+                <div class="text-6xl mb-4">🎓</div>
+                <h2 class="text-3xl font-bold mb-2 heading-font text-gray-800">Ready to Quiz?</h2>
+                <p class="text-gray-600 mb-6 font-medium">Enter your details to begin your scientific journey!</p>
+                
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 uppercase tracking-wider mb-1 ml-1">Full Name</label>
+                        <input type="text" id="input-name" placeholder="E.g. Chris Wong" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-lg font-semibold text-center bg-white/80" autocomplete="off">
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-bold text-gray-600 uppercase tracking-wider mb-1 ml-1">Class</label>
+                            <input type="text" id="input-class" placeholder="E.g. 1A" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-lg font-semibold text-center uppercase bg-white/80" autocomplete="off">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-bold text-gray-600 uppercase tracking-wider mb-1 ml-1">Class No.</label>
+                            <input type="number" id="input-class-no" placeholder="E.g. 12" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-lg font-semibold text-center bg-white/80" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+                <p id="form-error" class="text-red-500 text-sm font-bold mt-4 hidden"></p>
+
+                <button id="btn-login" class="w-full mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition transform hover:scale-105 text-xl heading-font">
+                    Let's Go! 🚀
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 1: Unit Selection -->
+        <div id="screen-menu" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 animate-bounce-in">
+            <button onclick="startUnit('unit4')" class="glass-panel p-6 md:p-8 text-center transition transform hover:scale-105 active:scale-95 group">
+                <div class="text-5xl md:text-6xl mb-4 group-hover:animate-bounce">🧬</div>
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-600 mb-2">Unit 4</h2>
+                <p class="text-sm md:text-base text-gray-600 font-medium">Cells & Heredity<br>(40 Qs)</p>
+            </button>
+
+            <button onclick="startUnit('unit5')" class="glass-panel p-6 md:p-8 text-center transition transform hover:scale-105 active:scale-95 group">
+                <div class="text-5xl md:text-6xl mb-4 group-hover:animate-bounce">⚡</div>
+                <h2 class="text-xl md:text-2xl font-bold text-yellow-500 mb-2">Unit 5</h2>
+                <p class="text-sm md:text-base text-gray-600 font-medium">Energy & Heat<br>(40 Qs)</p>
+            </button>
+
+            <button onclick="startUnit('unit6')" class="glass-panel p-6 md:p-8 text-center transition transform hover:scale-105 active:scale-95 group">
+                <div class="text-5xl md:text-6xl mb-4 group-hover:animate-bounce">🧊</div>
+                <h2 class="text-xl md:text-2xl font-bold text-cyan-500 mb-2">Unit 6</h2>
+                <p class="text-sm md:text-base text-gray-600 font-medium">Matter & Particles<br>(40 Qs)</p>
+            </button>
+
+            <button onclick="startUnit('bonus')" class="glass-panel p-6 md:p-8 text-center transition transform hover:scale-105 active:scale-95 group border-4 border-yellow-400 bg-gradient-to-b from-white/90 to-yellow-50/90">
+                <div class="text-5xl md:text-6xl mb-4 group-hover:animate-bounce">🏆</div>
+                <h2 class="text-xl md:text-2xl font-bold text-orange-600 mb-2">Bonus Quiz</h2>
+                <p class="text-sm md:text-base text-gray-600 font-medium">Ultimate Mix<br>(50 Qs)</p>
+            </button>
+        </div>
+
+        <!-- SCREEN 2: Quiz Game -->
+        <div id="screen-quiz" class="hidden">
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between text-white font-bold mb-2 text-lg drop-shadow-md">
+                    <span id="topic-title">Unit Title</span>
+                    <span>Question <span id="q-current">1</span>/<span id="q-total">20</span></span>
+                </div>
+                <div class="progress-track">
+                    <div id="progress-bar" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-6 md:p-10 animate-slide-up relative">
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-xl md:text-3xl font-bold text-gray-800 mb-8 leading-snug">
+                    Question text goes here?
+                </h2>
+
+                <!-- Options Grid -->
+                <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options injected via JS -->
+                </div>
+
+                <!-- Explanation Panel (Hidden until answered) -->
+                <div id="explanation-panel" class="hidden mt-8 p-6 rounded-2xl text-left animate-slide-up">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span id="explanation-icon" class="text-4xl">✅</span>
+                        <h3 id="explanation-title" class="text-2xl font-bold heading-font">Correct!</h3>
+                    </div>
+                    <p id="explanation-text" class="text-base md:text-lg text-gray-700 leading-relaxed font-medium mb-6">
+                        Elaborate explanation goes here.
+                    </p>
+                    <button id="btn-next" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg text-xl transition transform hover:scale-[1.02] active:scale-95 heading-font">
+                        Next Question ➡️
+                    </button>
+                </div>
+                
+                <!-- Submit Early Button -->
+                <div class="mt-8 border-t-2 border-gray-200 border-dashed pt-6 text-center">
+                    <button id="btn-submit-early" class="inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 px-6 rounded-full shadow-sm text-sm md:text-base transition transform hover:scale-105 active:scale-95">
+                        🛑 Submit Quiz Early
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Results -->
+        <div id="screen-results" class="hidden glass-panel p-8 md:p-12 text-center animate-bounce-in">
+            <div id="result-emoji" class="text-7xl md:text-8xl mb-4">🏆</div>
+            <h2 id="result-title" class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-2">Quiz Complete!</h2>
+            <p class="text-lg md:text-xl text-gray-600 mb-6">Here is how you did on <span id="final-unit-name" class="font-bold"></span>:</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-100 rounded-3xl p-6 shadow-inner">
+                    <p class="text-sm md:text-base text-gray-500 font-bold uppercase tracking-wider mb-2">Final Score</p>
+                    <p class="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 heading-font" id="final-score-text">
+                        20 / 20
+                    </p>
+                </div>
+                <div class="bg-gray-100 rounded-3xl p-6 shadow-inner">
+                    <p class="text-sm md:text-base text-gray-500 font-bold uppercase tracking-wider mb-2">Time Taken</p>
+                    <p class="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 heading-font" id="final-time-text">
+                        02:30
+                    </p>
+                </div>
+            </div>
+
+            <p id="save-status" class="text-base font-bold text-blue-600 mb-6">Saving your records to the teacher's spreadsheet...</p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="goHome()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-8 rounded-xl shadow-md text-xl transition transform hover:scale-105 active:scale-95">
+                    📚 Menu
+                </button>
+                <button onclick="replayCurrentUnit()" class="bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg text-xl transition transform hover:scale-105 active:scale-95">
+                    🔄 Play Again
+                </button>
+            </div>
+        </div>
+
+        <!-- CUSTOM MODAL: Confirm Early Submission -->
+        <div id="modal-confirm-early" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden">
+            <div class="bg-white text-gray-800 p-8 rounded-3xl max-w-md w-full mx-4 shadow-2xl text-center animate-bounce-in">
+                <div class="text-6xl mb-4">⚠️</div>
+                <h2 class="text-3xl font-bold text-orange-500 mb-2 heading-font">Submit Early?</h2>
+                <p class="text-gray-600 mb-6 font-medium">Are you sure you want to end the quiz now? Your current score will be saved, but unanswered questions will be marked incorrect.</p>
+                
+                <div class="flex gap-4 justify-center">
+                    <button id="btn-cancel-early" class="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition transform hover:scale-105">
+                        Cancel
+                    </button>
+                    <button id="btn-confirm-early" class="w-1/2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl shadow-lg transition transform hover:scale-105">
+                        Yes, Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- 📚 DATA: QUESTIONS & EXPLANATIONS (170 Total) ---
+        const quizData = {
+            unit4: {
+                title: "Unit 4: Cells & Reproduction",
+                questions: [
+                    { q: "What is the basic building block of all living things?", options: ["Organs", "Blood", "Cells", "Bones"], correct: 2, explanation: "<strong>Cells</strong> are like tiny biological LEGO bricks! Every living thing is made of cells! 🧱✨" },
+                    { q: "Which part of the microscope do you look through?", options: ["Objective lens", "Eyepiece", "Stage", "Mirror"], correct: 1, explanation: "You place your eye against the <strong>Eyepiece</strong> to see the magnified image! 👀🔬" },
+                    { q: "Which knob is used first to quickly find the image under a microscope?", options: ["Fine adjustment", "Coarse adjustment", "Diaphragm", "Base"], correct: 1, explanation: "The <strong>Coarse adjustment knob</strong> moves the lens a lot to help you find the object quickly! ⚙️🔍" },
+                    { q: "What is the function of the Nucleus in a cell?", options: ["Make food", "Control cell activities", "Protect the cell", "Store water"], correct: 1, explanation: "The <strong>Nucleus</strong> is the brain of the cell! It holds DNA and controls everything the cell does. 🧠👑" },
+                    { q: "Which jelly-like substance fills the cell where most reactions happen?", options: ["Cytoplasm", "Cell sap", "Chloroplast", "Vacuole"], correct: 0, explanation: "The <strong>Cytoplasm</strong> is a jelly-like liquid where organelles float and chemical reactions take place! 🍮🔬" },
+                    { q: "What controls the movement of substances in and out of an animal cell?", options: ["Cell wall", "Nucleus", "Cell membrane", "Cytoplasm"], correct: 2, explanation: "The <strong>Cell membrane</strong> is like a security guard, deciding what goes in and out of the cell! 🚪👮" },
+                    { q: "Which structure is found in plant cells but NOT in animal cells, giving it a regular shape?", options: ["Cell membrane", "Cell wall", "Nucleus", "Cytoplasm"], correct: 1, explanation: "The <strong>Cell wall</strong> is a rigid outer layer that protects and supports plant cells! 🧱🌿" },
+                    { q: "Where does photosynthesis happen in a plant cell?", options: ["Chloroplast", "Vacuole", "Nucleus", "Mitochondria"], correct: 0, explanation: "<strong>Chloroplasts</strong> act like solar panels, using sunlight to make sweet food for the plant! ☀️🌻" },
+                    { q: "Which structure is large in plant cells but very small or absent in animal cells?", options: ["Nucleus", "Chloroplast", "Vacuole", "Cell wall"], correct: 2, explanation: "A <strong>Vacuole</strong> is a storage sac holding water and nutrients. Plants have a giant one! 💧🎒" },
+                    { q: "How do humans grow from a baby to an adult?", options: ["Cells get bigger", "Cells divide to make more cells", "Cells absorb water", "Cells merge together"], correct: 1, explanation: "Growth happens through <strong>Cell Division</strong>! One cell splits into two, making millions of new cells! ➗👶➡️👨" },
+                    { q: "What is the correct order of organization in the human body?", options: ["Cell -> Organ -> Tissue -> System", "Tissue -> Cell -> System -> Organ", "Cell -> Tissue -> Organ -> System", "Organ -> System -> Cell -> Tissue"], correct: 2, explanation: "Cells group into <strong>Tissues</strong>, tissues form <strong>Organs</strong> (like the heart), and organs work together in a <strong>System</strong>! 🧩🫀" },
+                    { q: "What is the male reproductive cell called?", options: ["Ovum", "Testis", "Zygote", "Sperm"], correct: 3, explanation: "The male cell is the <strong>Sperm</strong>! It has a long tail to swim fast! 🏊‍♂️🧬" },
+                    { q: "Where are human egg cells (ova) produced?", options: ["Ovary", "Uterus", "Placenta", "Vagina"], correct: 0, explanation: "The <strong>Ovary</strong> is the female organ that produces and releases egg cells (ova)! 🥚🌸" },
+                    { q: "What do we call the fusion of a sperm and an ovum?", options: ["Menstruation", "Puberty", "Implantation", "Fertilization"], correct: 3, explanation: "<strong>Fertilization</strong> is the magical moment when sperm and egg fuse to create a new life (zygote)! ✨👶" },
+                    { q: "Where does a baby develop and grow during pregnancy?", options: ["Ovary", "Stomach", "Uterus", "Umbilical cord"], correct: 2, explanation: "The <strong>Uterus</strong> (womb) is the strong, muscular organ where the baby safely grows for 9 months! 🏠🤰" },
+                    { q: "How does a developing foetus get oxygen and nutrients from its mother?", options: ["Through the placenta and umbilical cord", "By breathing inside the uterus", "By eating food from the stomach", "Through the amniotic fluid"], correct: 0, explanation: "The <strong>Placenta</strong> filters nutrients, and the <strong>Umbilical cord</strong> delivers them straight to the baby's belly! 🍼🔗" },
+                    { q: "What is the fluid that acts as a shock absorber to protect the foetus?", options: ["Blood", "Cytoplasm", "Amniotic fluid", "Water"], correct: 2, explanation: "The <strong>Amniotic fluid</strong> surrounds the baby, acting like a protective water balloon against bumps! 🎈🛡️" },
+                    { q: "What is the period called when a child's body begins developing into an adult?", options: ["Heredity", "Puberty", "Labour", "Fertilization"], correct: 1, explanation: "<strong>Puberty</strong> is the time when teenagers experience rapid physical changes to reach sexual maturity! 📈🧑" },
+                    { q: "Where is genetic information (DNA) stored in a cell?", options: ["Inside the Vacuole", "Inside the Cell membrane", "Inside Chromosomes in the Nucleus", "Inside Chloroplasts"], correct: 2, explanation: "<strong>Chromosomes</strong> inside the Nucleus are packed with DNA—the instruction manual for your traits! 🧬📖" },
+                    { q: "How are identical twins formed?", options: ["Two sperms fertilize two eggs", "One sperm fertilizes one egg, which then splits into two", "Two sperms fertilize one egg", "They are born at different times"], correct: 1, explanation: "A single fertilized egg (zygote) splits completely in half, creating two babies with <strong>exactly the same DNA</strong>! 👯‍♂️🧬" },
+                    { q: "Which organism consists of only ONE single cell?", options: ["Dog", "Amoeba", "Oak Tree", "Human"], correct: 1, explanation: "<strong>Amoebas</strong> are amazing tiny creatures made of just ONE single cell (unicellular)! Everything they need to live happens inside that one tiny bubble! 🦠💧" },
+                    { q: "When using a microscope, which part reflects light upwards through the specimen?", options: ["Eyepiece", "Clips", "Mirror", "Coarse adjustment knob"], correct: 2, explanation: "The <strong>Mirror</strong> catches light from the room and bounces it up through the tiny hole in the stage so you can clearly see your specimen! 🪞🔦" },
+                    { q: "Why do we add iodine solution to onion skin cells before looking at them?", options: ["To feed the cells", "To make them transparent", "To stain them so structures like the nucleus are visible", "To kill bacteria"], correct: 2, explanation: "Most cells are clear like glass! Adding <strong>Iodine (a stain)</strong> acts like dye, highlighting the nucleus and cell walls so they pop out! 🧪🔬" },
+                    { q: "When drawing a plant cell, why should the cell wall be drawn with TWO lines?", options: ["Because it has two cell walls", "To show its thickness", "To make it look 3D", "Because it is moving"], correct: 1, explanation: "The cell wall isn't just a thin boundary; it's a sturdy, thick barrier! Drawing <strong>two lines</strong> shows exactly how thick it is! 🧱✏️" },
+                    { q: "What is the process where generalized cells become specialized to do specific jobs?", options: ["Cell division", "Cell differentiation", "Cell reproduction", "Cell expanding"], correct: 1, explanation: "This is called <strong>Cell Differentiation</strong>! It's like students graduating and choosing different specific careers! 🎓🧬" },
+                    { q: "A group of similar cells working together forms a...", options: ["Organ", "System", "Organism", "Tissue"], correct: 3, explanation: "When a team of the same type of cells group up to do a job, they form a <strong>Tissue</strong> (like muscle tissue)! 🤝🥩" },
+                    { q: "How many chromosomes are inside a normal human sperm or ovum?", options: ["46", "23", "92", "12"], correct: 1, explanation: "Sex cells carry exactly <strong>23 chromosomes</strong> (half a set), so when they combine, the baby gets the perfect total of 46! 🧩👶" },
+                    { q: "When a sperm and ovum fuse, the new cell is called a Zygote. How many chromosomes does it have?", options: ["23", "46", "92", "0"], correct: 1, explanation: "23 from Dad + 23 from Mom = <strong>46 chromosomes</strong>! A complete set of instructions to build a human! 🧬➕" },
+                    { q: "Why is the female ovum so much larger than the male sperm?", options: ["It needs to fight off bacteria", "It contains a food store for the early embryo", "It holds twice as much DNA", "It has a large tail"], correct: 1, explanation: "The ovum is huge because it packs a massive <strong>food store</strong> to feed the developing zygote before it reaches the uterus! 🥚🍱" },
+                    { q: "Where does fertilization normally take place in the human body?", options: ["Uterus", "Ovary", "Oviduct (Fallopian tube)", "Vagina"], correct: 2, explanation: "The sperm meets the egg halfway in the <strong>Oviduct</strong> (Fallopian tube) while the egg is travelling down to the uterus! 🛣️💘" },
+                    { q: "What is 'implantation' during pregnancy?", options: ["When the sperm meets the egg", "When the embryo attaches to the thick lining of the uterus", "When the baby is born", "When the placenta falls out"], correct: 1, explanation: "<strong>Implantation</strong> is when the tiny embryo sinks into the soft, nutrient-rich lining of the uterus to start growing! 🛏️🌱" },
+                    { q: "During birth, how is the baby pushed out of the mother's body?", options: ["The baby swims out", "The strong muscles of the uterus contract", "The umbilical cord pushes it", "Gravity pulls it down"], correct: 1, explanation: "The thick walls of the uterus are made of muscle! During labour, they <strong>contract powerfully</strong> to push the baby out through the vagina! 💪👶" },
+                    { q: "If two separate eggs are fertilized by two separate sperms at the same time, what is the result?", options: ["Identical twins", "Non-identical twins", "Conjoined twins", "Clones"], correct: 1, explanation: "This creates <strong>Non-identical twins</strong>! Because they came from two different zygotes, they have different DNA! 👦👧" },
+                    { q: "Which of these is an example of 'continuous variation'?", options: ["Blood group", "Ability to roll your tongue", "Height", "Having attached earlobes"], correct: 2, explanation: "<strong>Height</strong> is continuous because it has a huge range of gradual differences (anywhere between short and tall), unlike distinct categories! 📏🧍‍♀️" },
+                    { q: "DNA is shaped like a twisted ladder. What is this famous shape called?", options: ["Double helix", "Single spiral", "Triple crown", "Golden ratio"], correct: 0, explanation: "It is called a <strong>Double Helix</strong>! It consists of two long strands twisted around each other like a spiral staircase! 🧬🪜" },
+                    { q: "In DNA, there are 4 bases: A, T, C, and G. Which base ALWAYS pairs with A?", options: ["C", "G", "T", "A"], correct: 2, explanation: "It's a strict rule! <strong>A always pairs with T</strong> (Think: Apples in the Tree)! 🍎🌳" },
+                    { q: "In DNA, which base ALWAYS pairs with C?", options: ["A", "T", "G", "C"], correct: 2, explanation: "<strong>C always pairs with G</strong> (Think: Cars in the Garage)! This locks the two sides of the DNA ladder together perfectly! 🚗🏠" },
+                    { q: "What is a main reason married couples might practice birth control?", options: ["To stop diseases", "To reach their family planning goals and decide when to have children", "To make the baby grow faster", "To change the baby's DNA"], correct: 1, explanation: "<strong>Family planning</strong> allows parents to use birth control so they can wait until they are emotionally and financially ready before having a baby! 🗓️👨‍👩‍👧" },
+                    { q: "Which part of the cell is known as the 'book of life' because it holds all your genetic instructions?", options: ["Cell membrane", "DNA", "Vacuole", "Cytoplasm"], correct: 1, explanation: "<strong>DNA</strong> is the ultimate recipe book! It contains all the instructions to build every single part of you and dictate your features! 📖🧬" },
+                    { q: "Which cells in your body are specialized for carrying messages?", options: ["Red blood cells", "Muscle cells", "Bone cells", "Nerve cells"], correct: 3, explanation: "<strong>Nerve cells</strong> have long, wire-like branches to quickly zap messages from your brain to the rest of your body! ⚡🧠" },
+                    { q: "Which organelle is found in plant cells but NEVER in animal cells?", options: ["Nucleus", "Cytoplasm", "Cell membrane", "Chloroplast"], correct: 3, explanation: "<strong>Chloroplasts</strong> are strictly for plants! Animals cannot make their own food using sunlight. 🚫🪴" },
+                    { q: "If you place an onion cell in pure water, it will not burst. Why?", options: ["It has no water inside", "It has a strong cell wall", "It has a large nucleus", "It is waterproof"], correct: 1, explanation: "The <strong>Cell Wall</strong> provides rigid, structural support that prevents the plant cell from bursting like a water balloon! 🧱💧" },
+                    { q: "What connects a bone to a muscle in the human body?", options: ["Cartilage", "Ligament", "Tendon", "Joint"], correct: 2, explanation: "A <strong>Tendon</strong> is a tough band of tissue that anchors your muscle to your bone so you can move! 💪🦴" },
+                    { q: "Which is an example of a human organ?", options: ["A red blood cell", "Muscle tissue", "The heart", "The nervous system"], correct: 2, explanation: "The <strong>Heart</strong> is an organ! It is made of different tissues (muscle, nerve, blood) working together to pump blood! ❤️" },
+                    { q: "What is the very first stage of a human's life cycle?", options: ["Embryo", "Foetus", "Zygote", "Baby"], correct: 2, explanation: "Life starts as a single-celled <strong>Zygote</strong> immediately after fertilization! 🌱" },
+                    { q: "During puberty, which hormone is mainly responsible for changes in boys?", options: ["Estrogen", "Testosterone", "Progesterone", "Adrenaline"], correct: 1, explanation: "<strong>Testosterone</strong> is the male sex hormone that triggers a deeper voice, facial hair, and muscle growth! 🧔‍♂️" },
+                    { q: "During puberty, which hormone is mainly responsible for changes in girls?", options: ["Testosterone", "Estrogen", "Insulin", "Thyroxine"], correct: 1, explanation: "<strong>Estrogen</strong> triggers female secondary sexual characteristics like breast development and the start of menstruation. 👩" },
+                    { q: "How long does a typical human pregnancy last?", options: ["6 months", "12 months", "About 9 months", "36 weeks exact"], correct: 2, explanation: "A normal pregnancy lasts <strong>about 9 months</strong> (roughly 40 weeks) from the last menstrual period! 🗓️👶" },
+                    { q: "What carries oxygenated blood from the placenta to the foetus?", options: ["Amniotic fluid", "Umbilical cord", "Uterus wall", "Mother's heart"], correct: 1, explanation: "The <strong>Umbilical cord</strong> is the vital lifeline carrying oxygen and nutrients directly into the baby's bloodstream! 🩸🔗" },
+                    { q: "What feature determines your natural eye colour?", options: ["Diet", "Environment", "Genes inherited from parents", "Age"], correct: 2, explanation: "Eye colour is a classic example of <strong>Heredity</strong>! You inherit the genes for it directly from your parents' DNA. 👁️🧬" },
+                    { q: "Which is an example of 'discontinuous variation'?", options: ["Height", "Weight", "Foot length", "Blood group"], correct: 3, explanation: "<strong>Blood group</strong> is discontinuous because it falls into distinct categories (A, B, AB, O). You can't be 'in between' blood groups! 🩸🅰️" },
+                    { q: "If a microscope has a 10x eyepiece and a 40x objective lens, what is the total magnification?", options: ["50x", "30x", "400x", "4000x"], correct: 2, explanation: "You multiply them together! 10 x 40 = <strong>400x magnification</strong>! 🔍✖️" },
+                    { q: "What do we use to place a specimen on before looking at it under a microscope?", options: ["A petri dish", "A glass slide", "A coverslip", "A mirror"], correct: 1, explanation: "We place the tiny object on a flat, rectangular <strong>Glass Slide</strong> so the light can shine through it! 🧊" },
+                    { q: "Why do we lower a coverslip slowly at an angle over a specimen?", options: ["To crush it", "To prevent trapping air bubbles", "To make it wet", "To scratch the glass"], correct: 1, explanation: "Dropping it flat traps bubbles! Lowering it at an angle pushes the <strong>air bubbles</strong> out of the way. 🫧🚫" },
+                    { q: "Which type of human cell has NO nucleus?", options: ["Skin cell", "Nerve cell", "Red blood cell", "Muscle cell"], correct: 2, explanation: "Mature <strong>Red blood cells</strong> kick out their nucleus to make more room for carrying oxygen! 🔴💨" },
+                    { q: "Where is the baby pushed out from during normal childbirth?", options: ["Oviduct", "Ovary", "Vagina", "Stomach"], correct: 2, explanation: "During birth, the baby leaves the uterus and travels through the <strong>Vagina</strong> (the birth canal) into the outside world! 🚪👶" },
+                    { q: "What is menstruation?", options: ["The breaking down and shedding of the uterus lining", "The release of an egg", "The fusion of sperm and egg", "The growth of the foetus"], correct: 0, explanation: "If an egg isn't fertilized, the thick <strong>lining of the uterus breaks down</strong> and passes out of the body as blood. 🩸" },
+                    { q: "What is ovulation?", options: ["When a sperm enters an egg", "When the uterus bleeds", "When an ovary releases a mature egg", "When the baby is born"], correct: 2, explanation: "<strong>Ovulation</strong> is the moment the ovary releases a ripe egg into the oviduct, ready for potential fertilization! 🥚🎯" },
+                    { q: "Which contraceptive method also helps prevent sexually transmitted infections (STIs)?", options: ["Birth control pills", "Male Condom", "IUD", "Calendar method"], correct: 1, explanation: "The <strong>Condom</strong> provides a physical barrier, making it the only method listed that blocks both sperm AND disease-causing germs! 🛡️" },
+                    { q: "Which structure acts as the 'delivery tube' for sperm to leave the male body?", options: ["Testis", "Urethra", "Oviduct", "Ovary"], correct: 1, explanation: "The <strong>Urethra</strong> is the tube running through the penis that carries both urine and semen out of the body (at different times!). 🛣️" }
+                ]
+            },
+            unit5: {
+                title: "Unit 5: Energy & Heat Transfer",
+                questions: [
+                    { q: "What type of energy is stored in food or batteries?", options: ["Kinetic energy", "Chemical energy", "Thermal energy", "Potential energy"], correct: 1, explanation: "<strong>Chemical energy</strong> is trapped inside the bonds of food and batteries, waiting to be used by your body or devices! 🍎🔋" },
+                    { q: "What type of energy does a moving car have?", options: ["Potential energy", "Thermal energy", "Kinetic energy", "Chemical energy"], correct: 2, explanation: "<strong>Kinetic energy</strong> is the energy of movement! Anything that is moving has kinetic energy. 🚗💨" },
+                    { q: "What energy is stored in a stretched rubber band?", options: ["Elastic potential energy", "Chemical energy", "Kinetic energy", "Sound energy"], correct: 0, explanation: "When you stretch it, you store <strong>Elastic potential energy</strong>. When you let go, it turns into kinetic energy! 🏹💥" },
+                    { q: "What form of energy allows us to see things?", options: ["Sound energy", "Thermal energy", "Light energy", "Electrical energy"], correct: 2, explanation: "<strong>Light energy</strong> bounces off objects and into our eyes so we can see the beautiful world! 💡👁️" },
+                    { q: "What energy conversion happens when you turn on a television?", options: ["Light to Electrical", "Electrical to Light and Sound", "Chemical to Kinetic", "Thermal to Sound"], correct: 1, explanation: "The TV takes <strong>Electrical energy</strong> from the plug and turns it into <strong>Light</strong> (picture) and <strong>Sound</strong> (audio)! 📺⚡" },
+                    { q: "What energy conversion happens when you rub your hands together?", options: ["Thermal to Kinetic", "Chemical to Light", "Kinetic to Thermal", "Potential to Sound"], correct: 2, explanation: "The friction from your movement (<strong>Kinetic</strong>) generates heat (<strong>Thermal</strong>)! 👏🔥" },
+                    { q: "Which heat transfer method involves direct contact between solids?", options: ["Conduction", "Convection", "Radiation", "Evaporation"], correct: 0, explanation: "<strong>Conduction</strong> happens when vibrating particles bump into their neighbors, passing the heat along the solid! 🍳🔥" },
+                    { q: "Why do metals feel cold when you touch them?", options: ["They have low temperatures", "They are good conductors that quickly pull heat away from your hand", "They are good insulators", "They absorb radiation"], correct: 1, explanation: "Metals are excellent <strong>heat conductors</strong>. They rapidly steal the thermal energy from your warm hand! 🧊🤚" },
+                    { q: "Which material is the best heat insulator (poor conductor)?", options: ["Copper", "Aluminium", "Air", "Iron"], correct: 2, explanation: "<strong>Air</strong> is a fantastic insulator because its particles are very far apart, making it hard to pass heat! 🌬️🧥" },
+                    { q: "How does heat travel through liquids and gases?", options: ["Conduction", "Convection", "Radiation", "Expansion"], correct: 1, explanation: "In <strong>Convection</strong>, the heated fluid becomes lighter and rises, while cooler fluid sinks, creating a current! 🍲⬆️" },
+                    { q: "Why is the heating element of a kettle placed at the bottom?", options: ["To use conduction", "To set up a convection current", "To increase radiation", "To save electricity"], correct: 1, explanation: "Heating the bottom makes the hot water rise and cold water sink (<strong>Convection current</strong>), heating the whole kettle evenly! 🫖🔃" },
+                    { q: "How does heat from the Sun reach the Earth?", options: ["Conduction", "Convection", "Radiation", "Through air particles"], correct: 2, explanation: "<strong>Radiation</strong> uses invisible waves that can travel through the empty vacuum of space! ☀️🚀" },
+                    { q: "Which color is the BEST absorber of heat radiation?", options: ["Shiny silver", "White", "Dull black", "Yellow"], correct: 2, explanation: "<strong>Dull black</strong> surfaces absorb almost all the heat radiation hitting them, which is why black shirts feel hot in the sun! 🖤🔥" },
+                    { q: "Why are teapots often shiny silver?", options: ["To look pretty", "To absorb heat from the air", "To reflect radiation and keep the tea hot longer", "To conduct heat faster"], correct: 2, explanation: "Shiny surfaces are poor emitters of radiation, so they trap the heat inside and keep your tea warm! 🫖✨" },
+                    { q: "What is the ultimate source of almost all energy on Earth?", options: ["The Ocean", "Fossil Fuels", "The Sun", "Wind"], correct: 2, explanation: "<strong>The Sun</strong> provides light for plants (food), drives the wind, and powers the water cycle! ☀️🌍" },
+                    { q: "Which of the following is a non-renewable energy source?", options: ["Solar", "Coal", "Wind", "Hydroelectric"], correct: 1, explanation: "<strong>Coal</strong> is a fossil fuel. It takes millions of years to form, so once we use it, it's gone! ⛏️🔥" },
+                    { q: "Which of these is a renewable energy source?", options: ["Natural Gas", "Oil", "Wind power", "Nuclear"], correct: 2, explanation: "<strong>Wind power</strong> is renewable because the wind will never run out! 🌬️🔋" },
+                    { q: "What does the 'Law of Conservation of Energy' state?", options: ["Energy can be destroyed", "Energy can be created from nothing", "Energy can only change forms, it cannot be created or destroyed", "Energy always turns into light"], correct: 2, explanation: "Energy is immortal! It just shape-shifts from one form (like chemical) into another (like kinetic)! ♻️✨" },
+                    { q: "When a lightbulb is on, some energy is 'wasted'. What form is this wasted energy?", options: ["Light energy", "Thermal (Heat) energy", "Sound energy", "Chemical energy"], correct: 1, explanation: "Old lightbulbs get very hot. We only want light, so the <strong>Thermal energy</strong> is considered wasted! 💡🥵" },
+                    { q: "Which energy conversion happens in a wind turbine?", options: ["Thermal to Electrical", "Kinetic to Electrical", "Light to Kinetic", "Chemical to Electrical"], correct: 1, explanation: "The moving wind (<strong>Kinetic</strong>) spins the turbine, which a generator turns into <strong>Electrical energy</strong>! 🌬️⚡" },
+                    { q: "What is the standard scientific unit used for measuring energy?", options: ["Newton", "Kilogram", "Joule", "Degree"], correct: 2, explanation: "Energy is measured in <strong>Joules (J)</strong>! It takes about 1 Joule to lift an apple over your head! 🍏📏" },
+                    { q: "What kind of energy is stored when you lift a roller-coaster to the top of a high track?", options: ["Kinetic energy", "Potential energy", "Thermal energy", "Sound energy"], correct: 1, explanation: "When it's high up, it stores <strong>Potential energy</strong>. When it drops, that turns into kinetic speed! 🎢⬆️" },
+                    { q: "A green plant uses light energy to make food. What does the light energy turn into?", options: ["Chemical energy", "Thermal energy", "Kinetic energy", "Electrical energy"], correct: 0, explanation: "The plant takes sunlight and locks it into its leaves and fruit as <strong>Chemical energy</strong> for us to eat! 🌻🍎" },
+                    { q: "According to the Law of Conservation of Energy, the total energy input always equals...", options: ["The wasted energy", "The total energy output", "Zero", "The kinetic energy"], correct: 1, explanation: "Energy cannot be destroyed! So the energy you put in will exactly equal the <strong>Total Energy Output</strong> (useful + wasted combined)! ⚖️🔋" },
+                    { q: "If a cooker has 500kJ of useful output and its efficiency is 80%, what was its input?", options: ["1000kJ", "400kJ", "625kJ", "800kJ"], correct: 2, explanation: "Since 80% of the input = 500kJ, the total input was <strong>625kJ</strong>! (500 / 0.8 = 625). 🧮🔥" },
+                    { q: "Why is water a terrible heat conductor compared to metals?", options: ["Water is a liquid", "Water is an insulator and its particles don't pass heat easily through conduction", "Water has no heat", "Water absorbs radiation"], correct: 1, explanation: "Liquids and gases are generally poor conductors. Heat travels through them mostly by convection, not <strong>Conduction</strong>! 💧🧊" },
+                    { q: "In a room, where is an air conditioner usually placed to cool the room efficiently?", options: ["Near the ceiling", "Near the floor", "In the exact middle", "Outside the window"], correct: 0, explanation: "Cold air is denser, so it <strong>sinks</strong>. Placing it near the ceiling creates a beautiful convection current that cools the whole room! ❄️⬇️" },
+                    { q: "Why do we often wear light-coloured clothes in the summer?", options: ["They reflect heat radiation, keeping us cool", "They absorb more heat", "They are better conductors", "They trap more air"], correct: 0, explanation: "White and shiny colours are excellent reflectors! They bounce the sun's <strong>heat radiation</strong> right off you! ✨👕" },
+                    { q: "Which of these energy sources is considered 'Non-renewable'?", options: ["Wind", "Solar", "Nuclear", "Hydroelectric"], correct: 2, explanation: "<strong>Nuclear</strong> energy relies on uranium, which is mined from the earth and cannot be replaced once we use it up! ☢️⛏️" },
+                    { q: "Which of these describes Hydroelectric power?", options: ["Burning coal for heat", "Using the kinetic energy of flowing water to spin turbines", "Splitting atoms", "Using wind to turn a fan"], correct: 1, explanation: "Hydroelectric dams trap water and let it fall, using its massive <strong>Kinetic energy</strong> to generate electricity! 🌊⚡" },
+                    { q: "When you pluck a guitar string, kinetic energy is mostly converted into...", options: ["Light energy", "Sound energy", "Chemical energy", "Potential energy"], correct: 1, explanation: "The vibrating string (kinetic) pushes the air, creating waves of <strong>Sound energy</strong>! 🎸🎶" },
+                    { q: "What kind of heat transfer requires NO particles at all and can travel through space?", options: ["Conduction", "Convection", "Radiation", "Evaporation"], correct: 2, explanation: "<strong>Radiation</strong> travels as invisible electromagnetic waves, so it doesn't need particles to carry it! 🚀☀️" },
+                    { q: "Why is the heating element in a water kettle always placed at the bottom?", options: ["Because hot water sinks", "Because hot water is less dense and rises, creating a convection current", "To look nice", "To absorb radiation"], correct: 1, explanation: "Hot fluid rises! Heating from the bottom ensures the hot water naturally mixes with the cold water above it via <strong>Convection</strong>! 🫖🔃" },
+                    { q: "What happens to the wasted energy from a machine?", options: ["It disappears forever", "It dissipates into the surroundings (usually as thermal energy)", "It turns into dark energy", "It goes back into the wires"], correct: 1, explanation: "Wasted energy doesn't vanish; it just <strong>spreads out into the environment</strong>, usually making the area slightly warmer! 🥵💨" },
+                    { q: "Fossil fuels were formed from...", options: ["Rocks melting", "The remains of ancient plants and animals buried over millions of years", "Chemicals from space", "Evaporated ocean water"], correct: 1, explanation: "Fossil fuels like coal and oil are the compressed, ancient remains of <strong>plants and animals</strong> that lived millions of years ago! 🦖🛢️" },
+                    { q: "If a roller coaster is completely stopped at the bottom of the track, what energy does it have?", options: ["High Kinetic Energy", "High Potential Energy", "No Kinetic Energy", "Electrical Energy"], correct: 2, explanation: "If it is at rest (not moving), it has exactly <strong>zero kinetic energy</strong>! 🛑🎢" },
+                    { q: "Why are kettle handles usually made of plastic?", options: ["Plastic absorbs energy", "Plastic is a poor conductor of heat (an insulator)", "Plastic is a good conductor", "Plastic reflects radiation"], correct: 1, explanation: "Plastic is a great <strong>insulator</strong>! It prevents the extreme heat of the metal kettle from conducting into your hand! 🫖🧤" },
+                    { q: "Why are birds' feathers so good at keeping them warm?", options: ["They are heavy", "They trap a layer of air, which is a great insulator", "They conduct heat well", "They produce chemical energy"], correct: 1, explanation: "Feathers are fluffy and trap lots of <strong>air</strong>. Since air particles are far apart, heat cannot easily escape through conduction! 🦅🧥" },
+                    { q: "What energy conversion happens inside a battery when it is being used?", options: ["Electrical to Chemical", "Chemical to Electrical", "Kinetic to Potential", "Thermal to Light"], correct: 1, explanation: "The <strong>Chemicals</strong> inside react to push electrons through the wires, creating <strong>Electrical energy</strong>! 🔋⚡" },
+                    { q: "Which colour of car will get the HOTTEST on a sunny day?", options: ["Shiny White", "Bright Yellow", "Dull Black", "Silver"], correct: 2, explanation: "<strong>Dull Black</strong> surfaces absorb almost all the radiation that hits them, quickly turning it into thermal energy! 🖤🔥" }
+                ]
+            },
+            unit6: {
+                title: "Unit 6: Particle Theory & Matter",
+                questions: [
+                    { q: "According to particle theory, what is all matter made of?", options: ["Tiny living cells", "Empty space", "Tiny particles in constant motion", "Solid blocks"], correct: 2, explanation: "Everything around us is made of incredibly <strong>tiny particles that are always moving</strong>! 🔬✨" },
+                    { q: "How are particles arranged in a solid?", options: ["Far apart and moving fast", "Tightly packed in a regular pattern", "Sliding past each other", "Not moving at all"], correct: 1, explanation: "Solid particles are <strong>tightly packed in a regular pattern</strong>. They can only vibrate in place! 🧊👯‍♂️" },
+                    { q: "Which state of matter takes the shape of its container but has a fixed volume?", options: ["Solid", "Liquid", "Gas", "Plasma"], correct: 1, explanation: "A <strong>Liquid</strong> can flow and take the shape of a cup, but you can't squeeze it into a smaller volume! 💧🥛" },
+                    { q: "How do particles move in a gas?", options: ["They vibrate in fixed positions", "They slide over each other slowly", "They move freely and randomly at high speeds", "They stay completely still"], correct: 2, explanation: "Gas particles are wild! They are spread far apart and zoom around <strong>freely at high speeds</strong>! 💨🏃‍♂️" },
+                    { q: "What happens to the particles of a solid when it is heated?", options: ["They get smaller", "They vibrate faster and push slightly apart", "They turn into a liquid instantly", "They lose energy"], correct: 1, explanation: "Heating gives particles energy! They <strong>vibrate faster and push apart</strong>, causing the solid to expand. 🔥📈" },
+                    { q: "What is the process called when a liquid turns into a gas?", options: ["Melting", "Freezing", "Condensation", "Boiling/Evaporation"], correct: 3, explanation: "This is called <strong>Boiling or Evaporation</strong>! The liquid particles gain enough energy to fly away into the air! ☕♨️" },
+                    { q: "What is the process called when a gas turns back into a liquid?", options: ["Sublimation", "Condensation", "Freezing", "Melting"], correct: 1, explanation: "This is <strong>Condensation</strong>! Gas particles hit a cold surface, lose energy, and huddle together as liquid drops! 🪟💧" },
+                    { q: "When sugar is mixed into water, the sugar 'disappears'. What is this process?", options: ["Melting", "Evaporation", "Dissolving", "Freezing"], correct: 2, explanation: "This is <strong>Dissolving</strong>! The sugar didn't melt; it broke into tiny particles and mixed with the water! 🍬🔄" },
+                    { q: "In a saltwater solution, what is the salt called?", options: ["Solvent", "Solute", "Solution", "Mixture"], correct: 1, explanation: "The substance that dissolves (the salt) is the <strong>Solute</strong>! The liquid doing the dissolving is the solvent. 🧂💧" },
+                    { q: "Using particle theory, why does sugar seem to disappear in water?", options: ["Sugar particles are destroyed", "Sugar particles evaporate", "Sugar particles hide in the spaces between water particles", "Water particles eat the sugar"], correct: 2, explanation: "The tiny sugar particles spread out and fit perfectly into the <strong>empty spaces between the water particles</strong>! 🧩🥛" },
+                    { q: "Why does a metal bridge expand on a hot summer day?", options: ["The metal particles grow bigger", "The metal particles move faster and take up more space", "The metal melts", "Air gets trapped inside the metal"], correct: 1, explanation: "Heat makes the metal particles vibrate energetically, so they push each other apart, causing <strong>Thermal Expansion</strong>! 🌉☀️" },
+                    { q: "What happens to a gas when you compress (squeeze) it?", options: ["The particles get smaller", "The space between the particles decreases", "The particles turn into a solid", "The particles stop moving"], correct: 1, explanation: "Because gas particles have lots of empty space between them, squeezing them just <strong>reduces the space between them</strong>! 🎈🤏" },
+                    { q: "What is the scientific term for the amount of matter in an object?", options: ["Weight", "Volume", "Density", "Mass"], correct: 3, explanation: "<strong>Mass</strong> is the amount of 'stuff' (matter/particles) an object is made of, usually measured in grams or kg! ⚖️🧱" },
+                    { q: "What is the scientific term for the amount of space an object takes up?", options: ["Mass", "Volume", "Density", "Length"], correct: 1, explanation: "<strong>Volume</strong> is how much 3D space an object occupies! 📦📏" },
+                    { q: "What is the formula to calculate Density?", options: ["Mass + Volume", "Mass × Volume", "Mass ÷ Volume", "Volume ÷ Mass"], correct: 2, explanation: "Density = <strong>Mass ÷ Volume</strong>. It tells you how tightly packed the particles are inside that space! ➗🧮" },
+                    { q: "If a foam block has a mass of 1.2g and a volume of 60cm³, what is its density?", options: ["0.02 g/cm³", "50 g/cm³", "72 g/cm³", "2 g/cm³"], correct: 0, explanation: "Mass (1.2) ÷ Volume (60) = <strong>0.02 g/cm³</strong>! It is very light for its size! 🧽🧠" },
+                    { q: "Why does a piece of wood float on water?", options: ["Wood is heavier than water", "Wood has a lower density than water", "Wood is a solid", "Wood absorbs water"], correct: 1, explanation: "Things float if they have a <strong>lower density</strong> than the liquid they are in. Wood particles are less tightly packed than water! 🪵💧" },
+                    { q: "Why does an iron nail sink in water?", options: ["It has a higher density than water", "It has a lower density than water", "It is small", "It is a metal"], correct: 0, explanation: "Iron particles are packed extremely tightly! Because its <strong>density is higher</strong> than water's, it sinks to the bottom! ⚓🌊" },
+                    { q: "Why is a foam block's density much lower than solid plastic?", options: ["Foam has no mass", "Foam contains a lot of trapped air (gas), which has very low density", "Foam particles are smaller", "Plastic is a liquid"], correct: 1, explanation: "Foam is full of tiny pockets of <strong>trapped air</strong>. Since air has almost no mass, it lowers the overall density! 🛁🫧" },
+                    { q: "What causes gas pressure inside a balloon?", options: ["Air is heavy", "Gas particles colliding with the inside walls of the balloon", "The balloon shrinking", "Gravity pulling the air down"], correct: 1, explanation: "Those fast-moving gas particles are constantly crashing into the balloon's walls. These billions of tiny impacts create <strong>Pressure</strong>! 🎈💥" },
+                    { q: "What is 'Brownian motion'?", options: ["The fast movement of cars", "The random, zigzag movement of particles in fluids", "The expanding of metals", "The sound of water"], correct: 1, explanation: "Brownian motion is the chaotic, <strong>random movement</strong> of visible particles (like fat droplets in milk) caused by invisible water particles crashing into them! 🥛💨" },
+                    { q: "What do we call a particle made of two or more atoms joined chemically together?", options: ["An element", "A nucleus", "A molecule", "A cell"], correct: 2, explanation: "When atoms link together, they form a <strong>Molecule</strong>! (Like two Hydrogens and one Oxygen making a water molecule). 🧬🔗" },
+                    { q: "The chemical formula for water is H2O. What does this mean?", options: ["2 Hydrogen atoms and 1 Oxygen atom", "2 Oxygen atoms and 1 Hydrogen atom", "2 Helium atoms", "1 Hydrogen and 2 Oxides"], correct: 0, explanation: "The tiny '2' belongs to the H, meaning <strong>two Hydrogen atoms</strong> are attached to <strong>one Oxygen atom</strong>! 💧🔬" },
+                    { q: "Why does the total volume DECREASE slightly when you mix 50ml of water and 50ml of alcohol?", options: ["The liquids evaporate immediately", "Smaller water particles fit into the empty spaces between larger alcohol particles", "The particles shrink", "The particles get destroyed"], correct: 1, explanation: "Because there is <strong>empty space</strong> between particles, the smaller particles tuck perfectly into the gaps, reducing the total volume! 🧩📉" },
+                    { q: "When heating a metal rod, what happens to its particles?", options: ["They expand and get bigger", "They vibrate faster and push further apart", "They turn into liquid", "They stop moving"], correct: 1, explanation: "Heating gives them energy! They <strong>vibrate violently and push their neighbours away</strong>, causing the metal to expand! 🔥↔️" },
+                    { q: "If the particles themselves do NOT change size when heated, why does the object expand?", options: ["The empty space between the particles increases", "New particles are created", "Air gets inside", "Gravity pulls them"], correct: 0, explanation: "Particles NEVER change size! Only the <strong>distance and empty space between them</strong> gets larger! 🎈📏" },
+                    { q: "What happens when a gas is compressed into a smaller container?", options: ["The particles shrink", "The particles hit the walls more frequently, increasing pressure", "The particles turn into a solid", "The pressure drops to zero"], correct: 1, explanation: "Less space means they travel less distance before hitting a wall. Hitting the walls <strong>more frequently</strong> = higher pressure! 📦💥" },
+                    { q: "What causes atmospheric pressure?", options: ["The weight of clouds", "Air particles in the atmosphere crashing into objects", "The sun's radiation", "The Earth spinning"], correct: 1, explanation: "We live at the bottom of an ocean of air! Billions of <strong>air particles crash into us</strong> every second, creating Atmospheric Pressure! 🌍🌬️" },
+                    { q: "If a plastic block has a mass of 20g and a volume of 10cm³, what is its density?", options: ["200 g/cm³", "10 g/cm³", "2 g/cm³", "0.5 g/cm³"], correct: 2, explanation: "Mass (20) divided by Volume (10) equals <strong>2 g/cm³</strong>! 🧮🧠" },
+                    { q: "Mercury is a liquid with a very high density (13.6 g/cm³). What will happen if you drop a piece of solid iron into it?", options: ["It will sink", "It will float", "It will dissolve", "It will melt"], correct: 1, explanation: "Because iron's density (7.9 g/cm³) is LESS than mercury's (13.6 g/cm³), the heavy iron will actually <strong>float</strong> on top! ⚓🎈" },
+                    { q: "Why does a hot air balloon rise?", options: ["Hot air has less mass than cold air", "Hot air expands, lowering its density compared to the cooler air outside", "The fire pushes against the ground", "The balloon gets lighter"], correct: 1, explanation: "Heating makes the air inside expand. Because it takes up more space for the same mass, its <strong>density drops</strong> and it floats! 🎈🔥" },
+                    { q: "When cooling a substance, its particles...", options: ["Move slower and come closer together (thermal contraction)", "Move faster", "Get smaller", "Explode"], correct: 0, explanation: "Taking away heat takes away their energy! They <strong>slow down and huddle closer together</strong>, shrinking the object! 🧊🥶" },
+                    { q: "In dissolving, mass is 'conserved'. What does this mean?", options: ["The mass disappears", "The total mass of the solute and solvent remains exactly the same before and after mixing", "The mass doubles", "The mass turns into volume"], correct: 1, explanation: "None of the particles are destroyed. Since all the particles are still there in the cup, the <strong>total mass never changes</strong>! ⚖️✅" },
+                    { q: "What do we call the solid substance that gets dissolved into a liquid (like sugar in tea)?", options: ["Solvent", "Solution", "Solute", "Mixture"], correct: 2, explanation: "The solid being broken down is the <strong>Solute</strong>! The liquid doing the dissolving is the Solvent. ☕🍬" },
+                    { q: "Compared to the biological cells in our bodies, how small are atoms and particles?", options: ["About the same size", "Slightly smaller", "Incredibly, unimaginably smaller!", "Larger"], correct: 2, explanation: "A single human cell is built out of <strong>trillions of atoms</strong>! Particles are unimaginably tiny! 🔬🌌" },
+                    { q: "Which state of matter has NO fixed shape and NO fixed volume?", options: ["Solid", "Liquid", "Gas", "Metal"], correct: 2, explanation: "A <strong>Gas</strong> will expand forever to fill any container you put it in! 💨📦" },
+                    { q: "If you heat the gas inside a closed rigid container, what happens to the gas pressure?", options: ["It decreases", "It increases because particles hit the walls harder and more often", "It stays the same", "It becomes a vacuum"], correct: 1, explanation: "Adding heat gives the particles crazy speed! They <strong>smash into the walls violently</strong>, spiking the pressure! 🌡️💥" },
+                    { q: "In which state of matter can particles ONLY vibrate in fixed positions?", options: ["Solid", "Liquid", "Gas", "Plasma"], correct: 0, explanation: "In a <strong>Solid</strong>, particles are locked in a strict grid. They can wiggle (vibrate), but they can't run away! 🧊🔒" },
+                    { q: "Why is a foam block's density so incredibly low?", options: ["Because foam is a liquid", "Because it contains lots of trapped air (gas), which has very little mass", "Because foam particles are hollow", "Because it is white"], correct: 1, explanation: "Foam is essentially a solid sponge filled with <strong>trapped air</strong>. Air has almost zero mass, drastically lowering the density! 🧽🌬️" },
+                    { q: "Which of the following is true about ALL matter?", options: ["It is always visible", "It is made of particles and takes up space", "It is always solid", "It has no mass"], correct: 1, explanation: "To be considered 'Matter', something must have <strong>Mass</strong> and occupy <strong>Space (Volume)</strong>! 🧱🪐" }
+                ]
+            },
+            bonus: {
+                title: "Bonus Challenge: The Ultimate Mix",
+                questions: [
+                    { q: "Which organelle controls all activities of the cell?", options: ["Vacuole", "Nucleus", "Chloroplast", "Cytoplasm"], correct: 1, explanation: "The <strong>Nucleus</strong> is the brain of the cell! 🧠" },
+                    { q: "Which energy is stored in the food we eat?", options: ["Kinetic", "Thermal", "Chemical", "Electrical"], correct: 2, explanation: "Food contains <strong>Chemical potential energy</strong>! 🍎" },
+                    { q: "What state of matter has particles tightly packed in a regular pattern?", options: ["Solid", "Liquid", "Gas", "Plasma"], correct: 0, explanation: "<strong>Solids</strong> are tightly packed! 🧊" },
+                    { q: "Where does fertilization take place in humans?", options: ["Ovary", "Uterus", "Oviduct (Fallopian tube)", "Vagina"], correct: 2, explanation: "Sperm meets the egg in the <strong>Oviduct</strong>! 🥚" },
+                    { q: "Heat transfer through a solid is called:", options: ["Convection", "Radiation", "Conduction", "Insulation"], correct: 2, explanation: "Solids transfer heat via <strong>Conduction</strong>! 🍳" },
+                    { q: "When liquid turns to gas at the surface, it is called:", options: ["Melting", "Evaporation", "Condensation", "Freezing"], correct: 1, explanation: "This is <strong>Evaporation</strong>! ♨️" },
+                    { q: "Which structure gives a plant cell its regular, rigid shape?", options: ["Cell Membrane", "Cytoplasm", "Cell Wall", "Nucleus"], correct: 2, explanation: "The <strong>Cell Wall</strong> provides support! 🧱" },
+                    { q: "What is the best surface to reflect heat radiation?", options: ["Shiny white", "Dull black", "Dull grey", "Rough brown"], correct: 0, explanation: "<strong>Shiny white</strong> reflects radiation best! ✨" },
+                    { q: "Density is defined as:", options: ["Volume / Mass", "Mass / Volume", "Mass + Volume", "Weight * Area"], correct: 1, explanation: "Density is <strong>Mass divided by Volume</strong>! ⚖️" },
+                    { q: "What passes nutrients from mother to foetus?", options: ["Amniotic fluid", "Placenta", "Ovary", "Uterus wall"], correct: 1, explanation: "The <strong>Placenta</strong> filters and passes nutrients! 🍼" },
+                    { q: "Which form of energy allows a guitar string to be heard?", options: ["Light", "Thermal", "Sound", "Potential"], correct: 2, explanation: "Vibrations create <strong>Sound energy</strong>! 🎸" },
+                    { q: "Gas particles...", options: ["Are close together", "Slide past each other", "Move randomly at high speeds", "Cannot move"], correct: 2, explanation: "Gas particles zip around <strong>randomly and fast</strong>! 💨" },
+                    { q: "Chromosomes contain...", options: ["Chlorophyll", "DNA", "Water", "Food"], correct: 1, explanation: "Chromosomes carry genetic <strong>DNA</strong>! 🧬" },
+                    { q: "Why do hot air balloons rise?", options: ["Hot air is less dense than cold air", "Hot air is heavier", "Gravity stops working", "Fire pushes the ground"], correct: 0, explanation: "Hot air expands and becomes <strong>less dense</strong>! 🎈" },
+                    { q: "What happens when sugar dissolves in water?", options: ["It melts", "It evaporates", "Particles hide in spaces between water particles", "It turns to gas"], correct: 2, explanation: "Sugar particles <strong>mix into the empty spaces</strong>! ☕" },
+                    { q: "What is a renewable energy source?", options: ["Coal", "Oil", "Natural Gas", "Solar"], correct: 3, explanation: "<strong>Solar</strong> energy won't run out! ☀️" },
+                    { q: "Which cell part acts like a solar panel?", options: ["Vacuole", "Nucleus", "Chloroplast", "Cell Membrane"], correct: 2, explanation: "<strong>Chloroplasts</strong> capture sunlight! 🌻" },
+                    { q: "When objects heat up, their particles...", options: ["Shrink", "Vibrate faster and move further apart", "Stop moving", "Turn into liquid"], correct: 1, explanation: "Heating makes particles <strong>move faster and expand</strong>! 🔥" },
+                    { q: "What is it called when teenagers become sexually mature?", options: ["Heredity", "Fertilization", "Puberty", "Implantation"], correct: 2, explanation: "This growth phase is called <strong>Puberty</strong>! 📈" },
+                    { q: "Which is the BEST heat insulator?", options: ["Iron", "Copper", "Air", "Aluminium"], correct: 2, explanation: "<strong>Air</strong> particles are far apart, stopping heat! 🌬️" },
+                    { q: "How do humans get energy?", options: ["Photosynthesis", "Chemical energy in food", "Electrical plugs", "Thermal radiation"], correct: 1, explanation: "We extract <strong>Chemical energy</strong> from food! 🍔" },
+                    { q: "Identical twins happen when...", options: ["One fertilized egg splits in two", "Two eggs are fertilized", "They look similar", "They are born same day"], correct: 0, explanation: "<strong>One fertilized egg splits completely</strong>! 👯‍♂️" },
+                    { q: "Condensation is...", options: ["Solid to Liquid", "Liquid to Gas", "Gas to Liquid", "Liquid to Solid"], correct: 2, explanation: "Gas cooling into a liquid is <strong>Condensation</strong>! 💧" },
+                    { q: "What is the purpose of the amniotic fluid?", options: ["Feed the baby", "Provide oxygen", "Act as a shock absorber", "Give DNA"], correct: 2, explanation: "It acts as a protective <strong>shock absorber</strong>! 🛡️" },
+                    { q: "Wood floats because...", options: ["It is heavy", "Its density is lower than water", "Its density is higher than water", "It is brown"], correct: 1, explanation: "Objects with <strong>lower density</strong> than water will float! 🪵" },
+                    { q: "Heat from the sun reaches us through...", options: ["Conduction", "Convection", "Radiation", "Insulation"], correct: 2, explanation: "<strong>Radiation</strong> travels through the vacuum of space! 🚀" },
+                    { q: "The fluid in the cell is called...", options: ["Cytoplasm", "Nucleus", "Blood", "Water"], correct: 0, explanation: "It's the jelly-like <strong>Cytoplasm</strong>! 🍮" },
+                    { q: "What energy conversion happens in a fan?", options: ["Kinetic to Electrical", "Electrical to Kinetic", "Thermal to Kinetic", "Chemical to Light"], correct: 1, explanation: "The plug gives <strong>Electrical</strong>, the blades give <strong>Kinetic</strong>! 🌀" },
+                    { q: "Which has a fixed volume but NO fixed shape?", options: ["Solid", "Liquid", "Gas", "Energy"], correct: 1, explanation: "A <strong>Liquid</strong> takes the shape of its container! 🥛" },
+                    { q: "The male reproductive cell is the...", options: ["Ovum", "Testis", "Sperm", "Zygote"], correct: 2, explanation: "The swimming male cell is the <strong>Sperm</strong>! 🏊‍♂️" },
+                    { q: "What is the main role of the cell membrane?", options: ["Makes food", "Controls what enters/exits", "Stores water", "Holds DNA"], correct: 1, explanation: "The cell membrane decides exactly what can go in and come out! 🚪" },
+                    { q: "What happens to an image viewed under a light microscope?", options: ["It becomes 3D", "It turns black and white", "It appears upside down and laterally inverted", "It gets smaller"], correct: 2, explanation: "The lenses flip the light, so everything looks completely backwards and upside down! 🙃" },
+                    { q: "Which male organ produces sperm?", options: ["Testis", "Urethra", "Sperm duct", "Penis"], correct: 0, explanation: "The <strong>Testis</strong> is the factory that creates all the sperm cells! 🏭" },
+                    { q: "What connects an ovary to the uterus?", options: ["Vagina", "Placenta", "Oviduct", "Umbilical cord"], correct: 2, explanation: "The <strong>Oviduct</strong> acts as a bridge for the egg to travel down! 🌉" },
+                    { q: "Which is the main male sex hormone?", options: ["Estrogen", "Testosterone", "Progesterone", "Adrenaline"], correct: 1, explanation: "<strong>Testosterone</strong> triggers male puberty changes! 🧔‍♂️" },
+                    { q: "What type of energy does a stretched bow store?", options: ["Kinetic", "Chemical", "Elastic potential", "Thermal"], correct: 2, explanation: "It stores <strong>Elastic potential energy</strong>, ready to snap back! 🏹" },
+                    { q: "What is the standard unit of energy?", options: ["Newton", "Joule", "Gram", "Meter"], correct: 1, explanation: "Energy is always measured in <strong>Joules (J)</strong>! 📏" },
+                    { q: "Why is the freezer compartment placed at the top of a refrigerator?", options: ["Cold air sinks, cooling the rest of the fridge", "Hot air sinks", "It absorbs radiation better", "To save space"], correct: 0, explanation: "Cold air is denser, so it <strong>sinks</strong>, setting up a convection current! ❄️⬇️" },
+                    { q: "What color is best to keep a house cool in summer?", options: ["Black", "White", "Dark green", "Red"], correct: 1, explanation: "<strong>White</strong> is excellent at reflecting heat radiation away! ☀️🏠" },
+                    { q: "What happens to alcohol particles when they evaporate?", options: ["They gain energy and escape into the air", "They turn into water", "They shrink in size", "They stop moving"], correct: 0, explanation: "They gain energy, break free, and fly away as a gas! ♨️" },
+                    { q: "What is 'sublimation'?", options: ["Liquid to gas", "Solid directly to gas", "Gas to solid", "Solid to liquid"], correct: 1, explanation: "<strong>Sublimation</strong> is when a solid skips the liquid phase and turns straight into a gas! 💨" },
+                    { q: "What is the density of an object with a mass of 50g and volume of 10cm³?", options: ["5 g/cm³", "500 g/cm³", "0.2 g/cm³", "60 g/cm³"], correct: 0, explanation: "50 ÷ 10 = <strong>5 g/cm³</strong>! 🧮" },
+                    { q: "Why does oil float on water?", options: ["Oil is a liquid", "Oil has a higher density than water", "Oil has a lower density than water", "Oil repels water"], correct: 2, explanation: "Because oil is <strong>less dense</strong> than water, it naturally rises to the top! 🛢️🎈" },
+                    { q: "What energy conversion occurs in a solar cell?", options: ["Light to Thermal", "Thermal to Kinetic", "Light to Electrical", "Chemical to Electrical"], correct: 2, explanation: "It captures sunlight and turns it straight into <strong>Electricity</strong>! ☀️⚡" },
+                    { q: "Fossil fuels are considered what type of energy source?", options: ["Renewable", "Non-renewable", "Clean", "Infinite"], correct: 1, explanation: "They take millions of years to form, making them strictly <strong>Non-renewable</strong>! 🛢️🚫" },
+                    { q: "What is the jelly-like substance inside a cell called?", options: ["Cell wall", "Chloroplast", "Cytoplasm", "Nucleus"], correct: 2, explanation: "The <strong>Cytoplasm</strong> is where all the cellular action happens! 🍮" },
+                    { q: "What is it called when an embryo attaches to the uterus lining?", options: ["Fertilization", "Ovulation", "Menstruation", "Implantation"], correct: 3, explanation: "This is called <strong>Implantation</strong>, and it marks the beginning of pregnancy! 🌱" },
+                    { q: "What is the shape of a DNA molecule?", options: ["Single circle", "Double helix", "Triple square", "Straight line"], correct: 1, explanation: "It's a twisted ladder called a <strong>Double Helix</strong>! 🧬🪜" },
+                    { q: "Why does a balloon expand when heated?", options: ["Gas particles get bigger", "Gas particles hit the walls harder and more often", "Rubber melts", "Cold air enters"], correct: 1, explanation: "The fast particles <strong>smash into the walls</strong>, pushing the rubber outward! 🎈💥" },
+                    { q: "By what method does heat reach us from a campfire?", options: ["Conduction", "Convection", "Radiation", "Insulation"], correct: 2, explanation: "<strong>Radiation</strong> waves carry the heat directly to your skin! 🔥👐" }
+                ]
+            }
+        };
+
+        // --- ⚙️ GAME STATE ---
+        let studentInfo = { name: "", className: "", classNo: "" };
+        let currentUnitKey = '';
+        let currentQuestions = [];
+        let currentQIndex = 0;
+        let scoreInCurrentUnit = 0;
+        let isAnswered = false;
+        
+        // Timer variables
+        let timerInterval;
+        let secondsElapsed = 0;
+
+        // --- 🎯 DOM ELEMENTS ---
+        const UI = {
+            btnHome: document.getElementById('btn-home'),
+            globalTimer: document.getElementById('global-timer'),
+            timerDisplay: document.getElementById('timer-display'),
+            globalScore: document.getElementById('global-score'),
+            scoreDisplay: document.getElementById('score-display'),
+            studentIdentity: document.getElementById('student-identity'),
+            
+            screens: {
+                login: document.getElementById('screen-login'),
+                menu: document.getElementById('screen-menu'),
+                quiz: document.getElementById('screen-quiz'),
+                results: document.getElementById('screen-results')
+            },
+            
+            login: {
+                name: document.getElementById('input-name'),
+                cls: document.getElementById('input-class'),
+                no: document.getElementById('input-class-no'),
+                error: document.getElementById('form-error'),
+                btn: document.getElementById('btn-login')
+            },
+            
+            quiz: {
+                topicTitle: document.getElementById('topic-title'),
+                currentQNum: document.getElementById('q-current'),
+                totalQNum: document.getElementById('q-total'),
+                progressBar: document.getElementById('progress-bar'),
+                questionText: document.getElementById('question-text'),
+                optionsGrid: document.getElementById('options-grid'),
+                
+                expPanel: document.getElementById('explanation-panel'),
+                expIcon: document.getElementById('explanation-icon'),
+                expTitle: document.getElementById('explanation-title'),
+                expText: document.getElementById('explanation-text'),
+                btnNext: document.getElementById('btn-next'),
+                btnSubmitEarly: document.getElementById('btn-submit-early')
+            },
+            
+            results: {
+                emoji: document.getElementById('result-emoji'),
+                title: document.getElementById('result-title'),
+                unitName: document.getElementById('final-unit-name'),
+                scoreText: document.getElementById('final-score-text'),
+                timeText: document.getElementById('final-time-text'),
+                saveStatus: document.getElementById('save-status')
+            },
+            
+            modals: {
+                confirmEarly: document.getElementById('modal-confirm-early'),
+                btnCancelEarly: document.getElementById('btn-cancel-early'),
+                btnConfirmEarly: document.getElementById('btn-confirm-early')
+            }
+        };
+
+        // --- 🚀 LOGIN LOGIC ---
+        UI.login.btn.addEventListener('click', () => {
+            const n = UI.login.name.value.trim();
+            const c = UI.login.cls.value.trim().toUpperCase();
+            const no = UI.login.no.value.trim();
+
+            if (n === "" || c === "" || no === "") {
+                UI.login.error.textContent = "⚠️ Please fill in all fields (Name, Class, Class No.)!";
+                UI.login.error.classList.remove('hidden');
+                return;
+            }
+            
+            studentInfo = { name: n, className: c, classNo: no };
+            UI.studentIdentity.textContent = `${n} (${c} - #${no})`;
+            UI.studentIdentity.classList.remove('hidden');
+            
+            showScreen('menu');
+        });
+
+        // --- 🗺️ NAVIGATION ---
+        function showScreen(screenName) {
+            Object.values(UI.screens).forEach(screen => screen.classList.add('hidden'));
+            UI.screens[screenName].classList.remove('hidden');
+            
+            if (screenName === 'menu' || screenName === 'login') {
+                UI.btnHome.classList.add('hidden');
+                UI.globalTimer.classList.add('hidden');
+                UI.globalScore.classList.add('hidden');
+                stopTimer();
+            } else {
+                UI.btnHome.classList.remove('hidden');
+                UI.globalTimer.classList.remove('hidden');
+                UI.globalScore.classList.remove('hidden');
+            }
+        }
+
+        UI.btnHome.addEventListener('click', goHome);
+        function goHome() { showScreen('menu'); }
+
+        // --- ⏱️ TIMER LOGIC ---
+        function startTimer() {
+            secondsElapsed = 0;
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            const s = (secondsElapsed % 60).toString().padStart(2, '0');
+            UI.timerDisplay.textContent = `${m}:${s}`;
+        }
+
+        // --- 🔀 SHUFFLE ARRAY HELPER ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- 🎮 QUIZ LOGIC ---
+        function startUnit(unitKey) {
+            currentUnitKey = unitKey;
+            
+            // Deep clone and Shuffle the entire list of questions
+            currentQuestions = JSON.parse(JSON.stringify(quizData[unitKey].questions));
+            shuffleArray(currentQuestions);
+
+            currentQIndex = 0;
+            scoreInCurrentUnit = 0;
+            UI.scoreDisplay.textContent = "0";
+            
+            UI.quiz.topicTitle.textContent = quizData[unitKey].title;
+            UI.quiz.totalQNum.textContent = currentQuestions.length;
+            
+            showScreen('quiz');
+            startTimer();
+            loadQuestion();
+        }
+
+        function replayCurrentUnit() {
+            startUnit(currentUnitKey);
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const qData = currentQuestions[currentQIndex];
+            
+            UI.quiz.currentQNum.textContent = currentQIndex + 1;
+            const progressPercent = ((currentQIndex) / currentQuestions.length) * 100;
+            UI.quiz.progressBar.style.width = `${progressPercent}%`;
+            
+            UI.quiz.questionText.innerHTML = qData.q;
+            
+            UI.quiz.expPanel.classList.add('hidden');
+            UI.quiz.expPanel.classList.remove('bg-green-100', 'bg-red-100');
+            
+            UI.quiz.optionsGrid.innerHTML = '';
+            
+            // Remember the correct answer text before we shuffle options
+            const originalCorrectText = qData.options[qData.correct];
+            
+            // Clone and Shuffle the options for this question
+            const shuffledOptions = [...qData.options];
+            shuffleArray(shuffledOptions);
+            
+            // Find the new index of the correct answer
+            const newCorrectIndex = shuffledOptions.indexOf(originalCorrectText);
+
+            shuffledOptions.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn bg-white border-2 border-gray-200 text-gray-700 font-bold text-base md:text-lg p-4 rounded-xl text-left shadow-sm";
+                const letter = String.fromCharCode(65 + index);
+                btn.innerHTML = `<span class="inline-block bg-gray-100 text-gray-500 rounded-lg px-3 py-1 mr-3">${letter}</span> ${optText}`;
+                
+                // Pass the dynamically found correct index to handleAnswer
+                btn.onclick = () => handleAnswer(index, btn, newCorrectIndex);
+                UI.quiz.optionsGrid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedIndex, clickedBtn, currentCorrectIndex) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const qData = currentQuestions[currentQIndex];
+            const isCorrect = (selectedIndex === currentCorrectIndex);
+            const allBtns = UI.quiz.optionsGrid.querySelectorAll('button');
+            
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            });
+            
+            if (isCorrect) {
+                clickedBtn.classList.remove('border-gray-200', 'opacity-70');
+                clickedBtn.classList.add('selected-correct');
+                scoreInCurrentUnit++;
+                UI.scoreDisplay.textContent = scoreInCurrentUnit;
+            } else {
+                clickedBtn.classList.remove('border-gray-200', 'opacity-70');
+                clickedBtn.classList.add('selected-wrong');
+                
+                // Highlight the button that WAS the correct answer
+                const correctBtn = allBtns[currentCorrectIndex];
+                correctBtn.classList.remove('opacity-70');
+                correctBtn.classList.add('reveal-correct');
+            }
+            showExplanation(isCorrect, qData.explanation);
+        }
+
+        function showExplanation(isCorrect, explanationHtml) {
+            UI.quiz.expPanel.classList.remove('hidden');
+            
+            if (isCorrect) {
+                UI.quiz.expPanel.classList.add('bg-green-100', 'border-2', 'border-green-300');
+                UI.quiz.expIcon.textContent = "🥳";
+                UI.quiz.expTitle.textContent = "Awesome! You got it right!";
+                UI.quiz.expTitle.className = "text-2xl font-bold heading-font text-green-700";
+                UI.quiz.expText.className = "text-base md:text-lg text-green-900 leading-relaxed font-medium mb-6";
+            } else {
+                UI.quiz.expPanel.classList.add('bg-red-100', 'border-2', 'border-red-300');
+                UI.quiz.expIcon.textContent = "🤔";
+                UI.quiz.expTitle.textContent = "Not quite, but let's learn why!";
+                UI.quiz.expTitle.className = "text-2xl font-bold heading-font text-red-700";
+                UI.quiz.expText.className = "text-base md:text-lg text-red-900 leading-relaxed font-medium mb-6";
+            }
+            
+            UI.quiz.expText.innerHTML = explanationHtml;
+            setTimeout(() => { UI.quiz.expPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+        }
+
+        UI.quiz.btnNext.addEventListener('click', () => {
+            currentQIndex++;
+            if (currentQIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        // --- SUBMIT EARLY MODAL LOGIC ---
+        UI.quiz.btnSubmitEarly.addEventListener('click', () => {
+            UI.modals.confirmEarly.classList.remove('hidden');
+        });
+
+        UI.modals.btnCancelEarly.addEventListener('click', () => {
+            UI.modals.confirmEarly.classList.add('hidden');
+        });
+
+        UI.modals.btnConfirmEarly.addEventListener('click', () => {
+            UI.modals.confirmEarly.classList.add('hidden');
+            showResults(); // Skip remaining questions and go to results
+        });
+
+        // --- 📊 RESULTS & GOOGLE SHEETS ---
+        
+        // ⚠️ TEACHER: PASTE YOUR GOOGLE WEB APP URL HERE
+        const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx6N4MqpR_CbDwXPdbpXjmAPhM4dSQYTJibMcCXyz0w-nNZf2mHcIrVezqHJcJNxEUZ/exec";
+
+        function showResults() {
+            stopTimer();
+            showScreen('results');
+            
+            // Force progress bar to full so they see completion of attempt
+            UI.quiz.progressBar.style.width = '100%';
+            
+            UI.results.unitName.textContent = quizData[currentUnitKey].title;
+            UI.results.scoreText.textContent = `${scoreInCurrentUnit} / ${currentQuestions.length}`;
+            UI.results.timeText.textContent = UI.timerDisplay.textContent;
+            
+            const ratio = scoreInCurrentUnit / currentQuestions.length;
+            if (ratio === 1) {
+                UI.results.emoji.textContent = "🌟";
+                UI.results.title.textContent = "Perfect Score!";
+                UI.results.title.className = "text-3xl md:text-4xl font-extrabold text-green-600 mb-2";
+            } else if (ratio >= 0.7) {
+                UI.results.emoji.textContent = "👍";
+                UI.results.title.textContent = "Great Job!";
+                UI.results.title.className = "text-3xl md:text-4xl font-extrabold text-blue-600 mb-2";
+            } else {
+                UI.results.emoji.textContent = "💪";
+                UI.results.title.textContent = "Keep Practicing!";
+                UI.results.title.className = "text-3xl md:text-4xl font-extrabold text-orange-600 mb-2";
+            }
+
+            submitToGoogleSheets();
+        }
+
+        function submitToGoogleSheets() {
+            if (GOOGLE_WEB_APP_URL === "YOUR_GOOGLE_WEB_APP_URL_HERE") {
+                UI.results.saveStatus.textContent = "⚠️ Data not saved online: Missing Google Script URL.";
+                UI.results.saveStatus.className = "text-sm font-bold text-yellow-600 mb-6";
+                return;
+            }
+
+            UI.results.saveStatus.textContent = "⏳ Saving your records to the teacher's spreadsheet...";
+            UI.results.saveStatus.className = "text-sm font-bold text-blue-600 mb-6";
+
+            const payload = {
+                name: studentInfo.name,
+                className: studentInfo.className,
+                classNo: studentInfo.classNo,
+                unitTitle: quizData[currentUnitKey].title,
+                score: scoreInCurrentUnit,
+                totalQuestions: currentQuestions.length,
+                timeTakenSeconds: secondsElapsed,
+                formattedTime: UI.timerDisplay.textContent
+            };
+
+            fetch(GOOGLE_WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                UI.results.saveStatus.textContent = "✅ Result saved successfully!";
+                UI.results.saveStatus.className = "text-sm font-bold text-green-600 mb-6";
+            })
+            .catch(err => {
+                console.error(err);
+                UI.results.saveStatus.textContent = "❌ Failed to save result to spreadsheet.";
+                UI.results.saveStatus.className = "text-sm font-bold text-red-600 mb-6";
+            });
+        }
+    </script>
+</body>
+</html>
